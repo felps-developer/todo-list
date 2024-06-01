@@ -5,6 +5,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useBuscarTarefas, useCriarTarefa } from "../../../hooks/tarefaHooks"
 
 
 const HomeContainer = styled.section``
@@ -12,10 +13,21 @@ const HomeContainer = styled.section``
 const Home = () => {
 
     const [visibleDialog, setVisibleDialog] = useState(false);
-    const { register, handleSubmit } = useForm();
+    const { register, handleSubmit, reset } = useForm();
+    const { data: listaTarefas, isFetched } = useBuscarTarefas();
+    const { mutateAsync: criar } = useCriarTarefa();
 
     const criarTarefa = (dados) => {
-        console.log(dados)
+        criar(dados, {
+            onSuccess: () => {
+                setVisibleDialog(false);
+                reset();
+            },
+            onError: (error) => {
+                console.log("ERRO", error.message);
+            },
+        });
+
     }
 
     return (
@@ -29,7 +41,15 @@ const Home = () => {
                         onClick={(e) => setVisibleDialog(true)}
                     />
                 </h1>
+                {
 
+                    isFetched && listaTarefas.map(tarefa => (
+                        <div key={tarefa.id} >
+                          <h5>{tarefa.titulo}</h5>  
+                          <p>{tarefa.descricao}</p>
+                        </div>
+                    ))
+                }
                 <Dialog
                     visible={visibleDialog}
                     header="Nova tarefa"
@@ -41,7 +61,7 @@ const Home = () => {
                     >
                         <InputText
                             placeholder="Nome da tarefa"
-                            {...register("nome", { required: true })}
+                            {...register("titulo", { required: true })}
                         />
                         <InputTextarea
                             placeholder="Descrição da tarefa"
